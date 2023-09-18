@@ -8,5 +8,5 @@ export class CreateTaskDto {
   @IsNotEmpty()
   description: string;
 
-  status: TaskStatus;
+  status: TaskStatus.OPEN;
 }

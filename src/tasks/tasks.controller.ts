@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TasksService } from './tasks.service';
-import { ObjectId } from 'mongoose';
+// import { ObjectId } from 'mongoose';
 
-@Controller('Task')
+@Controller('task')
 export class TasksController {
   constructor(private readonly taskService: TasksService) {}
 
@@ -36,7 +36,7 @@ export class TasksController {
   }
 
   @Get('/:id')
-  async getTaskById(@Param('id') id: ObjectId) {
+  async getTaskById(@Param('id') id: string) {
     try {
       const existingTask = await this.taskService.getTaskById(id);
       return existingTask;
@@ -46,9 +46,12 @@ export class TasksController {
   }
 
   @Put('/:id')
-  async updateTask(@Param('id') id: ObjectId) {
+  async updateTask(
+    @Param('id') id: string,
+    @Body() updateTaskDto: CreateTaskDto,
+  ) {
     try {
-      const updateTask = await this.taskService.updateTask(id);
+      const updateTask = await this.taskService.updateTask(id, updateTaskDto);
       return updateTask;
     } catch (e) {
       return e;
@@ -56,7 +59,7 @@ export class TasksController {
   }
 
   @Delete('/:id')
-  async deleteTask(@Param('id') id: ObjectId) {
+  async deleteTask(@Param('id') id: string) {
     try {
       const deleteTask = await this.taskService.deleteTask(id);
       return deleteTask;

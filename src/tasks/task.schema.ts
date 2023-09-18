@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { TaskStatus } from './task-status.enums';
+import { IUser } from 'src/users/user.schema';
+import mongoose from 'mongoose';
 
-@Schema({ versionKey: false })
+@Schema({ versionKey: false, timestamps: true })
 export class Task {
   @Prop({ required: true })
   title: string;
@@ -9,8 +10,17 @@ export class Task {
   @Prop({ required: true })
   description: string;
 
+  @Prop({ default: 'OPEN' })
+  status: string;
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+  assignedTo: IUser[];
+
   @Prop()
-  status: TaskStatus.DONE;
+  createdAt?: Date;
+
+  @Prop()
+  updatedAt?: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
