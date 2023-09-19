@@ -3,10 +3,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { BcryptService } from './bcrypt.service';
-import { UserSchema } from '../user.schema';
+import { User, UserSchema } from '../user.schema';
 import { UserModule } from '../user.module';
 import { UserService } from '../user.service';
 import { AuthService } from './auth.service';
+import { LocalStrategy } from './local.strategy';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
@@ -14,11 +16,16 @@ import { AuthService } from './auth.service';
     PassportModule,
     JwtModule.register({
       secret: 'NestJS-learning',
-      signOptions: { expiresIn: '1h' },
     }),
-    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
-  providers: [AuthService, BcryptService, UserService],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    BcryptService,
+    UserService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

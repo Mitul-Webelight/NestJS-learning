@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IUser } from 'src/users/user.schema';
+import { User } from 'src/users/user.schema';
 import mongoose from 'mongoose';
 
 @Schema({ versionKey: false, timestamps: true })
@@ -14,7 +14,7 @@ export class Task {
   status: string;
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-  assignedTo: IUser[];
+  assignedTo: User[];
 
   @Prop()
   createdAt?: Date;

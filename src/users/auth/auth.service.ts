@@ -1,9 +1,8 @@
-// import { ObjectId } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BcryptService } from './bcrypt.service';
 import { UserService } from '../user.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from '../dto/login-user.dto';
-import { BcryptService } from './bcrypt.service';
 
 @Injectable()
 export class AuthService {
@@ -13,34 +12,47 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(id: string) {
-    const user = await this.userService.findOneUser(id);
-    if (!user) {
-      throw { message: 'User not found', statusCode: 404 };
-    }
+  async validateUser(username: string, password: string): Promise<any> {
+    const user = await this.userService.findOneUser({
+      username,
+      password,
+    });
 
-    const passwordMatch = await this.bcryptService.comparePassword(
-      user.password,
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials 1');
+    }
+    const isPasswordValid = await this.bcryptService.comparePassword(
+      password,
       user.password,
     );
-    if (passwordMatch) {
-      return { message: 'Authentication successful', statusCode: 200 };
-    } else {
-      throw { message: 'Incorrect password', statusCode: 401 };
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials 2');
     }
+    return user;
   }
 
   async login(loginUserDto: LoginUserDto) {
     try {
-      await this.validateUser(loginUserDto.id);
-      const payload = { username: loginUserDto.username };
+      const { username, password } = loginUserDto;
+
+      const user = await this.validateUser(username, password);
+
+      const payload = {
+        username: user.username,
+        password: user.password,
+      };
+
+      const token = this.jwtService.sign(payload);
+
       return {
-        access_token: this.jwtService.sign(payload),
+        token: token,
         message: 'Authentication successful',
         statusCode: 200,
       };
     } catch (error) {
-      throw { message: 'Internal Server error', statusCode: 500 };
+      console.log(error);
+      throw { message: 'Server error', statusCode: 500 };
     }
   }
 }

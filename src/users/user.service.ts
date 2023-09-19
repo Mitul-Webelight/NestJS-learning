@@ -2,25 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { IUser } from './user.schema';
+import { IUser } from './user.interface';
 import { CreateUserDTO } from './dto/create-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel('User') private readonly userModel: Model<IUser>) {}
+  constructor(
+    @InjectModel('User')
+    private readonly userModel: Model<IUser>,
+  ) {}
 
   async addUser(createUserDto: CreateUserDTO): Promise<IUser> {
-    const newUser = new this.userModel(createUserDto);
-    return newUser.save();
+    try {
+      const newUser = new this.userModel(createUserDto);
+      return newUser.save();
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async getAllUser(): Promise<IUser[]> {
     const user = await this.userModel.find();
     return user;
-  }
-
-  async getUserByUsername(username: string): Promise<IUser | null> {
-    return await this.userModel.findOne({ username }).exec();
   }
 
   async getUserById(id: string): Promise<IUser> {
@@ -31,13 +35,17 @@ export class UserService {
       }
       return user;
     } catch (error) {
-      console.error(error);
       throw error;
     }
   }
 
-  async findOneUser(id: string): Promise<IUser> {
-    return await this.userModel.findById(id);
+  async findOneUser(loginUserDto: LoginUserDto): Promise<IUser | null> {
+    return await this.userModel
+      .findOne({
+        username: loginUserDto.username,
+        password: loginUserDto.password,
+      })
+      .exec();
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
