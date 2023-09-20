@@ -9,11 +9,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secret: 'NestJS-learning',
+      secretOrKey: 'NestJS-Learning',
     });
   }
 
-  async validate(payload: { username: string; password: string }) {
-    return { username: payload.username, password: payload.password };
+  async validate(payload) {
+    return { id: payload.id, username: payload.username };
   }
 }

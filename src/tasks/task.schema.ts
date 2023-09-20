@@ -1,19 +1,21 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { User } from 'src/users/user.schema';
-import mongoose from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+import { User } from '../users/user.schema';
+
+export type TaskDocument = HydratedDocument<Task>;
 
 @Schema({ versionKey: false, timestamps: true })
 export class Task {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: true })
+  @Prop()
   description: string;
 
-  @Prop({ default: 'OPEN' })
+  @Prop({ default: 'to do' })
   status: string;
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
   assignedTo: User[];
 
   @Prop()

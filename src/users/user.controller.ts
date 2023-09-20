@@ -8,61 +8,52 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-// import { ObjectId } from 'mongoose';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AuthService } from './auth/auth.service';
-import { LoginUserDto } from './dto/login-user.dto';
-import { CreateUserDTO } from './dto/create-user.dto';
+import { UserService } from './user.service';
 import { LocalAuthGuard } from './auth/local-auth.guard';
-import { BcryptService } from './auth/bcrypt.service';
+import { LoginUserDto } from './dto/login-user.dto';
+import { SignupUserDto } from './dto/signup-user.dto';
+import { AuthService } from './auth/auth.service';
+import { User } from './user.schema';
 
 @Controller('user')
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly authService: AuthService,
-    private readonly bcryptService: BcryptService,
   ) {}
+
+  @UseGuards(LocalAuthGuard)
+  @Get()
+  async getAllUser() {
+    return this.userService.getAll();
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Get('/:id')
+  async getUser(@Param('id') id: string): Promise<User> {
+    return this.userService.getById(id);
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Put('/:id')
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(id, updateUserDto);
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Delete('/:id')
+  async delete(@Param('id') id: string) {
+    return this.userService.delete(id);
+  }
 
   @Post('auth/login')
   async login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
   }
 
-  @Post()
-  async addUser(@Body() createUserDto: CreateUserDTO) {
-    try {
-      const hashedPassword = await this.bcryptService.hashingPassword(
-        createUserDto.password,
-      );
-      createUserDto.password = hashedPassword;
-      return this.userService.addUser(createUserDto);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  @Get()
-  async getAllUser() {
-    return this.userService.getAllUser();
-  }
-
-  @UseGuards(LocalAuthGuard)
-  @Get('/:id')
-  async getOneUser(@Param('id') id: string) {
-    return this.userService.getUserById(id);
-  }
-
-  @UseGuards(LocalAuthGuard)
-  @Put('/:id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.updateUser(id, updateUserDto);
-  }
-
-  @UseGuards(LocalAuthGuard)
-  @Delete('/:id')
-  async delete(@Param('id') id: string) {
-    return this.userService.deleteUser(id);
+  @Post('auth/signup')
+  async signup(@Body() signupUserDto: SignupUserDto) {
+    return this.authService.signup(signupUserDto);
   }
 }

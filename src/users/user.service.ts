@@ -2,32 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { IUser } from './user.interface';
-import { CreateUserDTO } from './dto/create-user.dto';
-import { LoginUserDto } from './dto/login-user.dto';
+import { User } from './user.schema';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel('User')
-    private readonly userModel: Model<IUser>,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  async addUser(createUserDto: CreateUserDTO): Promise<IUser> {
-    try {
-      const newUser = new this.userModel(createUserDto);
-      return newUser.save();
-    } catch (e) {
-      console.log(e);
-    }
+  async getAll() {
+    return this.userModel.find();
   }
-
-  async getAllUser(): Promise<IUser[]> {
-    const user = await this.userModel.find();
-    return user;
-  }
-
-  async getUserById(id: string): Promise<IUser> {
+  async getById(id: string): Promise<User> {
     try {
       const user = await this.userModel.findById(id);
       if (!user) {
@@ -35,29 +21,40 @@ export class UserService {
       }
       return user;
     } catch (error) {
+      console.error(error);
       throw error;
     }
   }
 
-  async findOneUser(loginUserDto: LoginUserDto): Promise<IUser | null> {
+  async findOne(username: string): Promise<User> {
+    return await this.userModel.findOne({ username });
+  }
+
+  async findManyById(usersId: string[]) {
     return await this.userModel
-      .findOne({
-        username: loginUserDto.username,
-        password: loginUserDto.password,
-      })
+      .find({ _id: { $in: usersId } })
+      .select('username')
       .exec();
   }
 
-  async updateUser(id: string, updateUserDto: UpdateUserDto) {
-    const updatedUser = await this.userModel.findByIdAndUpdate(
-      id,
-      updateUserDto,
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    return this.userModel.findByIdAndUpdate(
+      {
+        _id: id,
+      },
+      {
+        name: {
+          firstName: updateUserDto.firstName,
+          lastName: updateUserDto.lastName,
+          username: updateUserDto.username,
+          email: updateUserDto.email,
+        },
+      },
       { new: true },
     );
-    return updatedUser;
   }
 
-  async deleteUser(id: string): Promise<IUser> {
-    return await this.userModel.findByIdAndDelete(id);
+  async delete(id: string) {
+    return this.userModel.findByIdAndDelete({ _id: id });
   }
 }

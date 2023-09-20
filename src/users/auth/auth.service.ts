@@ -1,8 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { BcryptService } from './bcrypt.service';
+import { Injectable } from '@nestjs/common';
+import { BcryptService } from 'src/bcrypt/bcrypt.service';
 import { UserService } from '../user.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from '../dto/login-user.dto';
+import { SignupUserDto } from '../dto/signup-user.dto';
+import mongoose, { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from '../user.schema';
 
 @Injectable()
 export class AuthService {
@@ -10,49 +14,61 @@ export class AuthService {
     private userService: UserService,
     private bcryptService: BcryptService,
     private jwtService: JwtService,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.userService.findOneUser({
-      username,
-      password,
-    });
-
+  async validateUser(loginUserDto: LoginUserDto) {
+    const user = await this.userService.findOne(loginUserDto.username);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials 1');
+      throw { message: 'Invalid Crentials', statusCode: 401 };
     }
-    const isPasswordValid = await this.bcryptService.comparePassword(
-      password,
+
+    const passwordMatch = await this.bcryptService.comparePassword(
+      loginUserDto.password,
       user.password,
     );
 
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials 2');
+    if (!passwordMatch) {
+      throw { message: 'Invalid Crentials', statusCode: 401 };
     }
-    return user;
+    return { message: 'Authentication successful', statusCode: 200 };
   }
 
   async login(loginUserDto: LoginUserDto) {
     try {
-      const { username, password } = loginUserDto;
-
-      const user = await this.validateUser(username, password);
-
-      const payload = {
-        username: user.username,
-        password: user.password,
-      };
-
-      const token = this.jwtService.sign(payload);
-
+      await this.validateUser(loginUserDto);
+      const payload = { username: loginUserDto.username };
       return {
-        token: token,
+        access_token: this.jwtService.sign(payload, {
+          secret: 'NestJS-Learning',
+        }),
         message: 'Authentication successful',
         statusCode: 200,
       };
     } catch (error) {
       console.log(error);
-      throw { message: 'Server error', statusCode: 500 };
+      throw { message: 'Server Error', statusCode: 500 };
+    }
+  }
+
+  async signup(signupUserDto: SignupUserDto) {
+    try {
+      const createdUser = new this.userModel({
+        _id: new mongoose.Types.ObjectId(),
+        name: {
+          firstName: signupUserDto.firstName,
+          lastName: signupUserDto.lastName,
+        },
+        username: signupUserDto.username,
+        email: signupUserDto.email,
+        password: await this.bcryptService.hashingPassword(
+          signupUserDto.password,
+        ),
+      });
+      return createdUser.save();
+    } catch (error) {
+      console.log(error);
+      throw { message: 'Error creating user', statusCode: 500 };
     }
   }
 }

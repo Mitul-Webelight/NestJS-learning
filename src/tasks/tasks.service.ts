@@ -1,46 +1,80 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateTaskDto } from './dto/create-task.dto';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ITask } from './task.interface';
-import { Model } from 'mongoose';
+import { Task, TaskDocument } from './task.schema';
+import { Model, ObjectId } from 'mongoose';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
-export class TasksService {
-  constructor(@InjectModel('Task') private readonly taskModel: Model<ITask>) {}
+export class TaskService {
+  private readonly tasks: Task[] = [];
+  constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) {}
 
-  async createTask(createTaskDto: CreateTaskDto): Promise<ITask> {
-    const newTask = new this.taskModel(createTaskDto);
-    return newTask.save();
+  async create(createTaskDto: CreateTaskDto) {
+    const createdTask = new this.taskModel(createTaskDto);
+    return createdTask.save();
+  }
+  async getAll(): Promise<Task[]> {
+    return this.taskModel.find();
   }
 
-  async getAllTask(): Promise<ITask[]> {
-    const task = await this.taskModel.find();
-    return task;
+  async getByID(id: string): Promise<Task> {
+    return await this.taskModel.findById(id).exec();
   }
 
-  async getTaskById(id: string): Promise<ITask> {
-    const existingTask = await this.taskModel.findById(id).exec();
-    if (!existingTask) {
-      throw new NotFoundException(`Task with ${id} not found`);
+  async update(id: ObjectId, updateTaskDto: UpdateTaskDto) {
+    return this.taskModel.findByIdAndUpdate(
+      {
+        _id: id,
+        title: updateTaskDto.title,
+        description: updateTaskDto.description,
+      },
+      { new: true },
+    );
+  }
+
+  async delete(id: ObjectId) {
+    return this.taskModel.findByIdAndDelete({ _id: id });
+  }
+
+  async addAssignees(taskid: string, userid: string[]) {
+    return this.taskModel.findByIdAndUpdate(
+      { _id: taskid },
+      { assignedTo: userid },
+    );
+  }
+
+  async updateStatus(id: ObjectId, newStatus: string): Promise<Task> {
+    const isStatusValid = await this.validateStatusChange(id, newStatus);
+
+    if (isStatusValid) {
+      return this.taskModel.findByIdAndUpdate(
+        id,
+        { status: newStatus },
+        { new: true },
+      );
     }
-    return existingTask;
   }
 
-  async updateTask(id: string, updateTaskDto: CreateTaskDto): Promise<ITask> {
-    const existingTask = await this.taskModel
-      .findByIdAndUpdate(id, updateTaskDto, { new: true })
-      .exec();
-    if (!existingTask) {
-      throw new NotFoundException(`Task with ${id} not found`);
-    }
-    return existingTask;
+  async getStatus(id: ObjectId): Promise<string> {
+    const task = this.taskModel.findById({ _id: id });
+    return (await task).status;
   }
 
-  async deleteTask(id: string): Promise<void> {
-    const deleteTask = await this.taskModel.findByIdAndDelete(id);
-    if (!deleteTask) {
-      throw new NotFoundException(`Task with ${id} not found`);
+  async validateStatusChange(
+    id: ObjectId,
+    newStatus: string,
+  ): Promise<boolean> {
+    const currentStatus = await this.getStatus(id);
+
+    if (currentStatus === 'to do' && newStatus === 'in progress') {
+      return true;
+    } else if (currentStatus === 'in progress' && newStatus === 'completed') {
+      return true;
+    } else if (currentStatus === 'completed' && newStatus === 'in progress') {
+      return false;
+    } else {
+      return false;
     }
-    deleteTask;
   }
 }
