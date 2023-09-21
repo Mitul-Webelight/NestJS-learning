@@ -7,7 +7,6 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TaskService {
-  private readonly tasks: Task[] = [];
   constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
@@ -22,7 +21,7 @@ export class TaskService {
     return await this.taskModel.findById(id).exec();
   }
 
-  async update(id: ObjectId, updateTaskDto: UpdateTaskDto): Promise<string> {
+  async update(id: ObjectId, updateTaskDto: UpdateTaskDto): Promise<Task> {
     return this.taskModel.findByIdAndUpdate(
       {
         _id: id,
@@ -33,7 +32,7 @@ export class TaskService {
     );
   }
 
-  async delete(id: ObjectId): Promise<string> {
+  async delete(id: ObjectId): Promise<Task> {
     return this.taskModel.findByIdAndDelete({ _id: id });
   }
 
@@ -44,7 +43,7 @@ export class TaskService {
     );
   }
 
-  async updateStatus(id: ObjectId, newStatus: string): Promise<string> {
+  async updateStatus(id: ObjectId, newStatus: string): Promise<Task> {
     const isStatusValid = await this.validateStatusChange(id, newStatus);
 
     if (isStatusValid) {

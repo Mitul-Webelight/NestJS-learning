@@ -1,4 +1,10 @@
-import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  CanActivate,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class LocalAuthGuard implements CanActivate {
@@ -8,7 +14,10 @@ export class LocalAuthGuard implements CanActivate {
     const tokenHeader = request.header('Authorization');
 
     if (!tokenHeader) {
-      throw new Error('Authorization header is missing');
+      throw new HttpException(
+        'Authorization is missing',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const token = tokenHeader.replace('Bearer ', '');

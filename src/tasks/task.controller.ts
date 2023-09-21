@@ -17,6 +17,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { ObjectId } from 'mongoose';
 import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import { LocalAuthGuard } from 'src/users/auth/local-auth.guard';
+import { Task } from './task.schema';
 
 @Controller('task')
 export class TaskController {
@@ -24,7 +25,7 @@ export class TaskController {
 
   @UseGuards(LocalAuthGuard)
   @Get()
-  async getTasks(@Res() res): Promise<string> {
+  async getTasks(@Res() res): Promise<Task[]> {
     try {
       const allTask = await this.taskService.getAll();
       return res.status(HttpStatus.OK).json(allTask);
@@ -35,7 +36,7 @@ export class TaskController {
 
   @UseGuards(LocalAuthGuard)
   @Get('/:id')
-  async getTaskByID(@Param('id') id: string, @Res() res): Promise<string> {
+  async getTaskByID(@Param('id') id: string, @Res() res): Promise<Task> {
     try {
       const getTask = await this.taskService.getByID(id);
       return res.status(HttpStatus.OK).json(getTask);
@@ -49,7 +50,7 @@ export class TaskController {
   async create(
     @Body() createTaskDto: CreateTaskDto,
     @Res() res,
-  ): Promise<string> {
+  ): Promise<Task> {
     try {
       const addTask = await this.taskService.create(createTaskDto);
       return res.status(HttpStatus.CREATED).json(addTask);
@@ -64,7 +65,7 @@ export class TaskController {
     @Param('id') id: ObjectId,
     @Body() updateTaskDto: UpdateTaskDto,
     @Res() res,
-  ): Promise<string> {
+  ): Promise<Task> {
     try {
       const updateTask = await this.taskService.update(id, updateTaskDto);
       return res.status(HttpStatus.OK).json(updateTask);
@@ -75,7 +76,7 @@ export class TaskController {
 
   @UseGuards(LocalAuthGuard)
   @Delete('/:id')
-  async delete(@Param('id') id: ObjectId, @Res() res): Promise<string> {
+  async delete(@Param('id') id: ObjectId, @Res() res): Promise<Task> {
     try {
       const deleteTask = await this.taskService.delete(id);
       return res.status(HttpStatus.OK).json(deleteTask);
@@ -90,7 +91,7 @@ export class TaskController {
     @Body() updateTaskStatusDto: UpdateTaskStatusDto,
     @Param('id') id: ObjectId,
     @Res() res,
-  ): Promise<string> {
+  ): Promise<Task> {
     try {
       const updateTaskStatus = await this.taskService.updateStatus(
         id,

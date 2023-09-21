@@ -14,10 +14,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       username,
       password,
     });
-    console.log(
-      '🚀 ~ file: local.strategy.ts:17 ~ LocalStrategy ~ validate ~ user:',
-      user,
-    );
 
     if (!user) {
       throw new UnauthorizedException();

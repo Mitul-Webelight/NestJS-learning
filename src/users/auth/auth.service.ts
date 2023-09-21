@@ -1,4 +1,9 @@
-import { HttpStatus, Injectable, Res } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { BcryptService } from 'src/bcrypt/bcrypt.service';
 import { UserService } from '../user.service';
 import { JwtService } from '@nestjs/jwt';
@@ -14,14 +19,13 @@ export class AuthService {
     private userService: UserService,
     private bcryptService: BcryptService,
     private jwtService: JwtService,
-    @Res() res,
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  async validateUser(loginUserDto: LoginUserDto) {
+  async validateUser(loginUserDto: LoginUserDto): Promise<any> {
     const user = await this.userService.findOne(loginUserDto.username);
     if (!user) {
-      throw { message: 'Invalid Crentials', statusCode: 401 };
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED);
     }
 
     const passwordMatch = await this.bcryptService.comparePassword(
@@ -30,9 +34,8 @@ export class AuthService {
     );
 
     if (!passwordMatch) {
-      throw { message: 'Invalid Crentials', statusCode: 401 };
+      throw new UnauthorizedException(HttpStatus.UNAUTHORIZED);
     }
-    return { message: 'Authentication successful', statusCode: 200 };
   }
 
   async login(loginUserDto: LoginUserDto) {
@@ -48,7 +51,7 @@ export class AuthService {
       };
     } catch (error) {
       console.log(error);
-      throw { message: 'Server Error', statusCode: 500 };
+      throw new HttpException('Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -69,7 +72,7 @@ export class AuthService {
       return createdUser.save();
     } catch (error) {
       console.log(error);
-      throw { message: 'Error creating user', statusCode: 500 };
+      throw new HttpException('Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
