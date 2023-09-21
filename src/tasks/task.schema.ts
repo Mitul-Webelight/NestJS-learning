@@ -1,16 +1,28 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { TaskStatus } from './task-status.enums';
+import { HydratedDocument, Types } from 'mongoose';
+import { User } from '../users/user.schema';
 
-@Schema({ versionKey: false })
+export type TaskDocument = HydratedDocument<Task>;
+
+@Schema({ versionKey: false, timestamps: true })
 export class Task {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ required: true })
+  @Prop()
   description: string;
 
+  @Prop({ default: 'to do' })
+  status: string;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
+  assignedTo: User[];
+
   @Prop()
-  status: TaskStatus.DONE;
+  createdAt?: Date;
+
+  @Prop()
+  updatedAt?: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

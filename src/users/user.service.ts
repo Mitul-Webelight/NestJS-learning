@@ -1,14 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model } from 'mongoose';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.schema';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+  ) {}
 
-  async getById(id: ObjectId) {
+  async getAll() {
+    return this.userModel.find();
+  }
+  async getById(id: string): Promise<User> {
     try {
       const user = await this.userModel.findById(id);
       if (!user) {
@@ -21,36 +26,28 @@ export class UserService {
     }
   }
 
-  async findOne(id: ObjectId) {
-    return await this.userModel.findOne(id);
+  async findOne(username: string): Promise<User> {
+    return await this.userModel.findOne({ username });
   }
 
-  async findManyById(usersId: ObjectId) {
-    return await this.userModel
-      .find({ _id: { $in: usersId } })
-      .select('username')
-      .exec();
-  }
-
-  async update(id: ObjectId, updateUserDto: UpdateUserDto) {
-    await this.userModel.updateOne(
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    return this.userModel.findByIdAndUpdate(
       {
         _id: id,
       },
       {
         name: {
+          firstName: updateUserDto.firstName,
+          lastName: updateUserDto.lastName,
           username: updateUserDto.username,
           email: updateUserDto.email,
-          password: updateUserDto.password,
         },
       },
+      { new: true },
     );
-
-    const updatedUser = await this.getById(id);
-    return updatedUser;
   }
 
-  async delete(id: ObjectId) {
-    return await this.userModel.deleteOne({ _id: id });
+  async delete(id: string) {
+    return this.userModel.findByIdAndDelete({ _id: id });
   }
 }
