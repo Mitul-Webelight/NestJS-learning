@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Res } from '@nestjs/common';
 import { BcryptService } from 'src/bcrypt/bcrypt.service';
 import { UserService } from '../user.service';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +14,7 @@ export class AuthService {
     private userService: UserService,
     private bcryptService: BcryptService,
     private jwtService: JwtService,
+    @Res() res,
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 

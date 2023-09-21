@@ -10,7 +10,7 @@ export class TaskService {
   private readonly tasks: Task[] = [];
   constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) {}
 
-  async create(createTaskDto: CreateTaskDto) {
+  async create(createTaskDto: CreateTaskDto): Promise<Task> {
     const createdTask = new this.taskModel(createTaskDto);
     return createdTask.save();
   }
@@ -22,7 +22,7 @@ export class TaskService {
     return await this.taskModel.findById(id).exec();
   }
 
-  async update(id: ObjectId, updateTaskDto: UpdateTaskDto) {
+  async update(id: ObjectId, updateTaskDto: UpdateTaskDto): Promise<string> {
     return this.taskModel.findByIdAndUpdate(
       {
         _id: id,
@@ -33,18 +33,18 @@ export class TaskService {
     );
   }
 
-  async delete(id: ObjectId) {
+  async delete(id: ObjectId): Promise<string> {
     return this.taskModel.findByIdAndDelete({ _id: id });
   }
 
-  async addAssignees(taskid: string, userid: string[]) {
+  async addAssignees(taskid: string, userid: string[]): Promise<string> {
     return this.taskModel.findByIdAndUpdate(
       { _id: taskid },
       { assignedTo: userid },
     );
   }
 
-  async updateStatus(id: ObjectId, newStatus: string): Promise<Task> {
+  async updateStatus(id: ObjectId, newStatus: string): Promise<string> {
     const isStatusValid = await this.validateStatusChange(id, newStatus);
 
     if (isStatusValid) {

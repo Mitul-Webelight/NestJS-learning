@@ -3,9 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
   Post,
   Put,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,7 +16,6 @@ import { LocalAuthGuard } from './auth/local-auth.guard';
 import { LoginUserDto } from './dto/login-user.dto';
 import { SignupUserDto } from './dto/signup-user.dto';
 import { AuthService } from './auth/auth.service';
-import { User } from './user.schema';
 
 @Controller('user')
 export class UserController {
@@ -25,35 +26,72 @@ export class UserController {
 
   @UseGuards(LocalAuthGuard)
   @Get()
-  async getAllUser() {
-    return this.userService.getAll();
+  async getAllUser(@Res() res): Promise<string> {
+    try {
+      const getAllUser = await this.userService.getAll();
+      return res.status(HttpStatus.OK).json(getAllUser);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @UseGuards(LocalAuthGuard)
   @Get('/:id')
-  async getUser(@Param('id') id: string): Promise<User> {
-    return this.userService.getById(id);
+  async getUser(@Param('id') id: string, @Res() res): Promise<string> {
+    try {
+      const getUser = await this.userService.getById(id);
+      return res.status(HttpStatus.OK).json(getUser);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @UseGuards(LocalAuthGuard)
   @Put('/:id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Res() res,
+  ): Promise<string> {
+    try {
+      const updateUser = await this.userService.update(id, updateUserDto);
+      return res.status(HttpStatus.OK).json(updateUser);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @UseGuards(LocalAuthGuard)
   @Delete('/:id')
-  async delete(@Param('id') id: string) {
-    return this.userService.delete(id);
+  async delete(@Param('id') id: string, @Res() res): Promise<string> {
+    try {
+      const deleteUser = await this.userService.delete(id);
+      return res.status(HttpStatus.OK).json(deleteUser);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('auth/login')
-  async login(@Body() loginUserDto: LoginUserDto) {
-    return this.authService.login(loginUserDto);
+  async login(@Body() loginUserDto: LoginUserDto, @Res() res): Promise<string> {
+    try {
+      const userLogin = await this.authService.login(loginUserDto);
+      return res.status(HttpStatus.OK).json(userLogin);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('auth/signup')
-  async signup(@Body() signupUserDto: SignupUserDto) {
-    return this.authService.signup(signupUserDto);
+  async signup(
+    @Body() signupUserDto: SignupUserDto,
+    @Res() res,
+  ): Promise<string> {
+    try {
+      const userSignup = await this.authService.signup(signupUserDto);
+      return res.status(HttpStatus.CREATED).json(userSignup);
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
